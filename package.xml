@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>gocator_driver</name>
+  <version>0.0.1</version>
+  <description>Standalone GoSDK driver</description>
+  <maintainer email="smith.15485@osu.edu">Samantha Smith</maintainer>
+  <license>MIT</license>
+
+  <buildtool_depend>cmake</buildtool_depend>
+</package>
