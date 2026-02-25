@@ -14,6 +14,10 @@
 #define INVALID_RANGE_DOUBLE    ((k64f)-DOUBLE_MAX)             // floating point value to represent invalid range data.
 #define NM_TO_MM(VALUE) (((k64f)(VALUE))/1000000.0)
 #define UM_TO_MM(VALUE) (((k64f)(VALUE))/1000.0)
+#define EXPOSURE 360.0
+#define ROBOT_SPEED 200.0 // mm/s
+#define SCAN_TIME 1.0 // s
+#define SPACING_INTERVAL = 1000.0 // microns
 int main() {
     // Program logic goes here
     std::cout << "hello world" << std::endl;
@@ -67,15 +71,15 @@ int main() {
     kCheck(GoSurfaceGeneration_SetGenerationType(surfGen, GO_SURFACE_GENERATION_TYPE_CONTINUOUS));
 
     kCheck(GoSetup_SetExposureMode(setup, GO_ROLE_MAIN, GO_EXPOSURE_MODE_SINGLE));
-    kCheck(GoSetup_SetExposure(setup, GO_ROLE_MAIN, (GoSetup_ExposureLimitMax(setup, GO_ROLE_MAIN) - GoSetup_ExposureLimitMin(setup, GO_ROLE_MAIN)) / 10));    
-    GoSetup_SetSpacingInterval(setup, GO_ROLE_MAIN, 1000);
+    kCheck(GoSetup_SetExposure(setup, GO_ROLE_MAIN, EXPOSURE));    
+    GoSetup_SetSpacingInterval(setup, GO_ROLE_MAIN, SPACING_INTERVAL);
     
     kCheck(GoPartDetection_SetMinLength(partDet, GoPartDetection_MinLengthLimitMin(partDet)));
     kCheck(GoPartDetection_SetThreshold(partDet, GoPartDetection_ThresholdLimitMin(partDet)));
     
     GoSetup_SetTriggerDelay(setup, 1000);
     GoSystem_Start(go_system_);
-    sleep(1);
+    sleep(SCAN_TIME);
     
     // GoSensor_Start(sensor);
     
@@ -103,6 +107,7 @@ int main() {
       
       //get offsets and resolutions
       double xResolution = NM_TO_MM(GoSurfaceMsg_XResolution(surfaceMsg));
+      double yResolution = ROBOT_SPEED * (SPACING_INTERVAL / 1000.0)
       double yResolution = NM_TO_MM(GoSurfaceMsg_YResolution(surfaceMsg));
       double zResolution = NM_TO_MM(GoSurfaceMsg_ZResolution(surfaceMsg));
       double xOffset = UM_TO_MM(GoSurfaceMsg_XOffset(surfaceMsg));
@@ -119,23 +124,27 @@ int main() {
       cloud->width = width;
       cloud->resize(row_count*width);
       
-      double scale = 0.001;
       
       std::vector<int> index;
       //run over all rows
-      for (unsigned int ii = 0; ii < row_count; ii++)
+      for (unsigned int row = 0; row < row_count; row++)
       {
         //get the pointer to row
-        short *data = GoSurfaceMsg_RowAt(surfaceMsg,ii);
+        short *data = GoSurfaceMsg_RowAt(surfaceMsg,row);
         
-        //run over the width of row ii
-        for (unsigned int jj = 0; jj < width; jj++)
+        //run over the width of row row
+        for (unsigned int column = 0; column < width; column++)
         {
-          cloud->points.at(ii*width+jj).x = -scale*(xOffset + xResolution*jj);
-          cloud->points.at(ii*width+jj).y =  scale*(yOffset + yResolution*ii);
+          cloud->points.at(row*width+column).x = (xOffset + xResolution*column);
+          cloud->points.at(row*width+column).y =  (yOffset + yResolution*row);
           
-          cloud->points.at(ii*width+jj).z = scale*(zOffset + zResolution*data[jj]);
-          index.push_back(ii*width+jj);
+          if (data[column] != INVALID_RANGE_16BIT) {
+            cloud->points.at(row*width+column).z = (zOffset + zResolution*data[column]);
+            // std::cout << "Z: " << (zOffset + zResolution*data[column]) << std::endl;
+          }
+          else {
+            // cloud->points.at(row*width+column).z = INVALID_RANGE_DOUBLE;
+          }
         }
       }
       
