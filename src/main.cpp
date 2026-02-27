@@ -6,6 +6,8 @@
 //PCL
 #include <pcl/point_types.h>
 #include <pcl/io/pcd_io.h>
+#include <pcl/io/ply_io.h>
+
 
 #define IP_ADDRESS "192.168.1.10"
 // #define GO_TRIGGER_TIME 10
@@ -16,8 +18,7 @@
 #define UM_TO_MM(VALUE) (((k64f)(VALUE))/1000.0)
 #define EXPOSURE 360.0
 #define ROBOT_SPEED 200.0 // mm/s
-#define SCAN_TIME 1.0 // s
-#define SPACING_INTERVAL = 1000.0 // microns
+#define SCAN_TIME 1.5 // s
 int main() {
     // Program logic goes here
     std::cout << "hello world" << std::endl;
@@ -64,6 +65,9 @@ int main() {
 
     setup = GoSensor_Setup(sensor);
 
+    GoTransform tf = GoSensor_Transform(sensor);
+    GoTransform_SetSpeed(tf, ROBOT_SPEED);
+
     GoSurfaceGeneration surfGen = GoSetup_SurfaceGeneration(setup);
     GoPartDetection partDet = GoSetup_PartDetection(setup);
     GoSetup_SetScanMode(setup, GO_MODE_SURFACE);
@@ -72,12 +76,11 @@ int main() {
 
     kCheck(GoSetup_SetExposureMode(setup, GO_ROLE_MAIN, GO_EXPOSURE_MODE_SINGLE));
     kCheck(GoSetup_SetExposure(setup, GO_ROLE_MAIN, EXPOSURE));    
-    GoSetup_SetSpacingInterval(setup, GO_ROLE_MAIN, SPACING_INTERVAL);
-    
+    GoSetup_SetSpacingInterval(setup, GO_ROLE_MAIN, 0.067);
+    auto SPACING_INTERVAL = GoSetup_SpacingInterval(setup, GO_ROLE_MAIN);
     kCheck(GoPartDetection_SetMinLength(partDet, GoPartDetection_MinLengthLimitMin(partDet)));
     kCheck(GoPartDetection_SetThreshold(partDet, GoPartDetection_ThresholdLimitMin(partDet)));
-    
-    GoSetup_SetTriggerDelay(setup, 1000);
+    GoSetup_SetTriggerDelay(setup, 0.0);
     GoSystem_Start(go_system_);
     sleep(SCAN_TIME);
     
@@ -107,7 +110,6 @@ int main() {
       
       //get offsets and resolutions
       double xResolution = NM_TO_MM(GoSurfaceMsg_XResolution(surfaceMsg));
-      double yResolution = ROBOT_SPEED * (SPACING_INTERVAL / 1000.0)
       double yResolution = NM_TO_MM(GoSurfaceMsg_YResolution(surfaceMsg));
       double zResolution = NM_TO_MM(GoSurfaceMsg_ZResolution(surfaceMsg));
       double xOffset = UM_TO_MM(GoSurfaceMsg_XOffset(surfaceMsg));
@@ -118,6 +120,7 @@ int main() {
       std::cout << "Surface Message." << std::endl;
       std::cout << "\tLength: " <<  row_count << std::endl;
       std::cout << "\tWidth: " << width << std::endl;
+      std::cout << "\tY Resolution: " << yResolution << std::endl;
       
       //resize the point cloud
       cloud->height = row_count;
@@ -151,6 +154,7 @@ int main() {
       std::cout << "saving to file" << std::endl;
       // Save pointcloud to file
       pcl::io::savePCDFileBinary("cloud.pcd", *cloud);
+      pcl::io::savePLYFileBinary("cloud.ply", *cloud);
     }
     
     
