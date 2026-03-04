@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4"
+      main_tree_to_execute="main">
+  <BehaviorTree ID="main">
+    <Parallel failure_count="1"
+              success_count="1">
+      <ForceSuccess>
+        <Sequence>
+          <WaitForGuiInput button="init_system_push_button"/>
+          <GetValueFromLineEdit gui_line_edit_input="ip_address_line_edit"
+                                value="{ip_address}"/>
+          <InitializeScanningSystem ip_address="{ip_address}"
+                                    gocator_commander_object="{gocator_obj}"/>
+        </Sequence>
+      </ForceSuccess>
+      <ForceSuccess>
+        <Sequence>
+          <WaitForGuiInput button="trigger_scan_push_button"/>
+          <GetValueFromSpinBox gui_spin_box_input="scan_distance_double_spin_box"
+                               value="{scan_distance}"/>
+          <GetValueFromSpinBox gui_spin_box_input="robot_speed_double_spin_box"
+                               value="{robot_speed}"/>
+          <GetValueFromSpinBox gui_spin_box_input="scanner_exposure_double_spin_box"
+                               value="{exposure}"/>
+          <TriggerScan scan_distance="{scan_distance}"
+                       robot_velocity="{robot_speed}"
+                       scanner_exposure_value="{exposure}"
+                       output_directory="{project_folder_path}"
+                       gocator_commander_object="{gocator_obj}"/>
+        </Sequence>
+      </ForceSuccess>
+    </Parallel>
+  </BehaviorTree>
+
+  <!-- Description of Node Models (used by Groot) -->
+  <TreeNodesModel>
+    <Action ID="GetValueFromLineEdit"
+            editable="true">
+      <input_port name="gui_line_edit_input"/>
+      <output_port name="value"/>
+    </Action>
+    <Action ID="GetValueFromSpinBox"
+            editable="true">
+      <input_port name="gui_spin_box_input"/>
+      <output_port name="value"/>
+    </Action>
+    <Action ID="InitializeScanningSystem"
+            editable="true">
+      <input_port name="ip_address"/>
+      <output_port name="gocator_commander_object"/>
+    </Action>
+    <Action ID="TriggerScan"
+            editable="true">
+      <input_port name="scan_distance"/>
+      <input_port name="robot_velocity"/>
+      <input_port name="scanner_exposure_value"/>
+      <input_port name="output_directory"/>
+      <input_port name="gocator_commander_object"/>
+    </Action>
+    <Condition ID="WaitForGuiInput"
+               editable="true">
+      <input_port name="button"/>
+    </Condition>
+  </TreeNodesModel>
+
+</root>

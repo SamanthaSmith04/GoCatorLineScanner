@@ -92,7 +92,6 @@ int main() {
     if (GoSystem_ReceiveData(go_system_, &dataset, 1000000) != kOK) {
       std::cout << "error no data received" << std::endl;
       GoSystem_Stop(go_system_);
-
     }
     // create pointcloud from collected data
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
